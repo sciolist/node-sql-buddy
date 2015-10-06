@@ -1,0 +1,15 @@
+{
+	"name": "sql-buddy",
+	"version": "0.0.1",
+	"description": "Tiny sql query builder",
+	"main": "index.js",
+	"scripts": {
+		"test": "tap test/*"
+	},
+	"repository": "https://github.com/sciolist/node-sql-buddy.git",
+	"author": "Daniel Pihlstrom",
+	"license": "ISC",
+	"devDependencies": {
+		"tap": "^2.0.0"
+	}
+}
