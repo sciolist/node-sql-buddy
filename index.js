@@ -1,8 +1,9 @@
 exports = module.exports = Sql;
 var slice = Array.prototype.slice;
 
-function Sql(parts) {
-	if(!(this instanceof Sql)) return new Sql(parts);
+function Sql(opts, parts) {
+	if(!(this instanceof Sql)) return new Sql(opts, parts);
+	this._opts = opts || { variablePrefix: '$' };
 	this._parts = parts || [];
 }
 
@@ -22,7 +23,7 @@ Sql.prototype.append = function append(sql, args) {
 		throw new Error("Nested arrays cannot be used as sql parameter.");
 	}
 
-	return new Sql(this._parts.concat([[sql, args || []]]));
+	return new Sql(this._opts, this._parts.concat([[sql, args || []]]));
 };
 
 Sql.prototype.wrap = function wrap(prefix, txt, suffix, args) {
@@ -38,13 +39,14 @@ Sql.prototype.orderBy = function orderBy(args) { return this.append('ORDER BY ' 
 Sql.prototype.groupBy = function groupBy(args) { return this.append('GROUP BY ' + slice.call(arguments).join(',')); };
 
 Sql.prototype.toQuery = function toQuery() {
+	var variable = this._opts.variablePrefix || '$';
 	if (this._built !== undefined) return this._built;
 	var sqlList = [], argList = [], argCount = 0;
 	var outputArguments = new Map();
 	for(var i=0; i<this._parts.length; ++i) {
 		var txt = this._parts[i][0];
 		var args = this._parts[i][1];
-		txt = txt.replace(/(?!\\)\$(\d+)/g, function (m, idx) {
+		txt = txt.replace(new RegExp('(?!\\\\)\\' + (variable) + '(\\d+)', 'g'), function (m, idx) {
 			var argumentValue = args[Number(idx) - 1];
 			var savedIndex = outputArguments.get(argumentValue);
 			if (savedIndex === undefined) {
@@ -53,7 +55,7 @@ Sql.prototype.toQuery = function toQuery() {
 				argList.push(argumentValue);
 				outputArguments.set(argumentValue, savedIndex);
 			}
-			return '$' + savedIndex;
+			return variable + savedIndex;
 		});
 		sqlList.push(txt);
 	}
