@@ -26,15 +26,15 @@ Sql.prototype.append = function append(sql, args) {
 	return new Sql(this.opts, this._parts.concat([[sql, args || []]]));
 };
 
-Sql.prototype.wrap = function wrap(prefix, txt, suffix, args) {
-	return this.append(prefix || '').append(txt, args).append(suffix || '');
+Sql.prototype.wrap = function wrap(prefix, suffix, args) {
+	return new Sql(this.opts).append(prefix, args).append(this).append(suffix, args);
 };
 
 Sql.prototype.select = function select(args) { return this.append('SELECT ' + slice.call(arguments).join(',')); };
 Sql.prototype.from = function from(args) { return this.append('FROM ' + slice.call(arguments).join(',')); };
-Sql.prototype.where = function where(txt, args) { return this.wrap('WHERE (', txt, ')', args); };
-Sql.prototype.or = function or(txt, args) { return this.wrap('OR (', txt, ')', args); };
-Sql.prototype.and = function and(txt, args) { return this.wrap('AND (', txt, ')', args); };
+Sql.prototype.where = function where(txt, args) { return this.append('WHERE (' + txt + ')', args); };
+Sql.prototype.or = function or(txt, args) { return this.append('OR (' + txt + ')', args); };
+Sql.prototype.and = function and(txt, args) { return this.append('AND (' + txt + ')', args); };
 Sql.prototype.orderBy = function orderBy(args) { return this.append('ORDER BY ' + slice.call(arguments).join(',')); };
 Sql.prototype.groupBy = function groupBy(args) { return this.append('GROUP BY ' + slice.call(arguments).join(',')); };
 
