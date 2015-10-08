@@ -3,7 +3,7 @@ var slice = Array.prototype.slice;
 
 function Sql(opts, parts) {
 	if(!(this instanceof Sql)) return new Sql(opts, parts);
-	this._opts = opts || { variablePrefix: '$' };
+	this.opts = opts || { variablePrefix: '$' };
 	this._parts = parts || [];
 }
 
@@ -23,7 +23,7 @@ Sql.prototype.append = function append(sql, args) {
 		throw new Error("Nested arrays cannot be used as sql parameter.");
 	}
 
-	return new Sql(this._opts, this._parts.concat([[sql, args || []]]));
+	return new Sql(this.opts, this._parts.concat([[sql, args || []]]));
 };
 
 Sql.prototype.wrap = function wrap(prefix, txt, suffix, args) {
@@ -39,7 +39,7 @@ Sql.prototype.orderBy = function orderBy(args) { return this.append('ORDER BY ' 
 Sql.prototype.groupBy = function groupBy(args) { return this.append('GROUP BY ' + slice.call(arguments).join(',')); };
 
 Sql.prototype.toQuery = function toQuery() {
-	var variable = this._opts.variablePrefix || '$';
+	var variable = this.opts.variablePrefix || '$';
 	if (this._built !== undefined) return this._built;
 	var sqlList = [], argList = [], argCount = 0;
 	var outputArguments = new Map();
