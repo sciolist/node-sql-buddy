@@ -1,7 +1,7 @@
 var test = require('tap').test
 var assert = require('assert');
 
-var sql = require('../');
+var sql = require('../')();
 
 test('can dedupe parameters', function (t) {
 	var expectedSQL = 'select $1, $1';

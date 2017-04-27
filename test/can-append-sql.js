@@ -1,10 +1,10 @@
 var test = require('tap').test
 var assert = require('assert');
 
-var sql = require('../');
+var sql = require('../')();
 
 test('can append sub sql objects', function (t) {
-	var expectedSQL = 'select $1; select $2; select $3; select $4 select $2; select $3;';
+	var expectedSQL = 'select $1; select $2; select $3; select $4; select $2; select $3;';
 	var expectedArgs = [ 'test0', 'test1', 'test2', 'test3' ];
 
 	var query1 = sql()

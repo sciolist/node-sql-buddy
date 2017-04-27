@@ -1,65 +1,81 @@
-exports = module.exports = Sql;
+exports = module.exports = SqlBuilderFactory;
 var slice = Array.prototype.slice;
 
-function Sql(opts, parts) {
-	if(!(this instanceof Sql)) return new Sql(opts, parts);
-	this.opts = opts || { variablePrefix: '$' };
-	this._parts = parts || [];
+function Sql(options) {
+	this._parts = [];
+	this._options = options;
 }
 
-Sql.escape = function (v, quote) {
-	if(!quote) quote = "'";
-	return ((v||'').toString().replace(RegExp('[' + quote + ']', 'g'), function(m) { return m + m }));
-}
+Sql.prototype.append = function append(text, parameters) {
+	delete this._built;
 
-Sql.prototype.append = function append(sql, args) {
-	if((sql instanceof Sql)) {
-		var built = sql.toQuery();
-		sql = built.text;
-		args = built.parameters;
+	if (text && text.toQuery instanceof Function) {
+		let query = text.toQuery();
+		text = query.text;
+		parameters = query.parameters;
 	}
 
-	if(args && (args instanceof Array) && (args[0] instanceof Array) && args[0].length === 0) {
+	if(parameters && (parameters instanceof Array) && (parameters[0] instanceof Array) && parameters[0].length === 0) {
 		throw new Error("Nested arrays cannot be used as sql parameter.");
 	}
 
-	return new Sql(this.opts, this._parts.concat([[sql, args || []]]));
-};
-
-Sql.prototype.wrap = function wrap(prefix, suffix, args) {
-	return new Sql(this.opts).append(prefix, args).append(this).append(suffix, args);
-};
-
-Sql.prototype.select = function select(args) { return this.append('SELECT ' + slice.call(arguments).join(',')); };
-Sql.prototype.from = function from(args) { return this.append('FROM ' + slice.call(arguments).join(',')); };
-Sql.prototype.where = function where(txt, args) { return this.append('WHERE (' + txt + ')', args); };
-Sql.prototype.or = function or(txt, args) { return this.append('OR (' + txt + ')', args); };
-Sql.prototype.and = function and(txt, args) { return this.append('AND (' + txt + ')', args); };
-Sql.prototype.orderBy = function orderBy(args) { return this.append('ORDER BY ' + slice.call(arguments).join(',')); };
-Sql.prototype.groupBy = function groupBy(args) { return this.append('GROUP BY ' + slice.call(arguments).join(',')); };
+	this._parts.push(text, parameters);
+	return this;
+}
 
 Sql.prototype.toQuery = function toQuery() {
-	var variable = this.opts.variablePrefix || '$';
+	var self = this;
+	var prefix = this._options.parameterNamePrefix;
 	if (this._built !== undefined) return this._built;
-	var sqlList = [], argList = [], argCount = 0;
+	var sqlList = [], argList = [], argNameList = [], argCount = 0;
 	var outputArguments = new Map();
-	for(var i=0; i<this._parts.length; ++i) {
-		var txt = this._parts[i][0];
-		var args = this._parts[i][1];
-		txt = txt.replace(new RegExp('(?!\\\\)\\' + (variable) + '(\\d+)', 'g'), function (m, idx) {
-			var argumentValue = args[Number(idx) - 1];
-			var savedIndex = outputArguments.get(argumentValue);
+	for(var i=0; i<this._parts.length; i+=2) {
+		var txt = this._parts[i];
+		var args = this._parts[i + 1] || [];
+		txt = txt.replace(new RegExp('(?!\\\\)\\' + (prefix) + '(\\d+)', 'g'), function (m, idx) {
+			var parameterName;
+			var parameterValue = self._options.parameterValueFormat(args[Number(idx) - 1]);
+			var savedIndex = outputArguments.get(parameterValue);
 			if (savedIndex === undefined) {
 				argCount += 1;
 				savedIndex = argCount;
-				argList.push(argumentValue);
-				outputArguments.set(argumentValue, savedIndex);
+				parameterName = self._options.parameterNameFormat(savedIndex, self._options);
+				argNameList.push(parameterName);
+				argList.push(parameterValue);
+				outputArguments.set(parameterValue, savedIndex);
+			} else {
+				parameterName = self._options.parameterNameFormat(savedIndex, self._options);
 			}
-			return variable + savedIndex;
+			return self._options.parameterNameFormat(savedIndex, self._options);
 		});
 		sqlList.push(txt);
 	}
-	this._built = { text: sqlList.join(' '), parameters: argList };
+	this._built = {
+		text: sqlList.join(' '),
+		names: argNameList,
+		parameters: argList
+	};
 	return this._built;
 };
 
+
+function SqlBuilderFactory(options) {
+	var opts = Object.assign({
+		parameterNamePrefix: '$',
+		parameterNameFormat(name, opts) { return opts.parameterNamePrefix + name; },
+		parameterValueFormat(value, opts) { return value; }
+	}, opts);
+
+	function builder(text, parameters) {
+		let sql = new Sql(opts);
+		if (arguments.length > 0) sql.append(text, parameters);
+		return sql;
+	}
+
+	builder.escape = function escape(v, quote) {
+		if(!quote) quote = "'";
+		return ((v||'').toString().replace(RegExp('[' + quote + ']', 'g'), function(m) { return m + m }));
+	}
+
+	return builder;
+}
