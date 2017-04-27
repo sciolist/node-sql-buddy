@@ -37,13 +37,13 @@ Also a very basic sql quote escape:
 Options:
 
     var sql = require('sql-buddy')({
-        variablePrefix: '$',   // change the '$' prefix to another character, such as '@' for mssql
+        parameterNamePrefix: '$',   // change the '$' prefix to another character, such as '@' for mssql
         
         // change how the parameter name is built
-        formatParameterName(index, opts) { return '$' + index }
+        parameterNameFormat(index, opts) { return '$' + index }
 
         // change the parameter value before 
-        formatParameterValue(value, opts) {
+        parameterValueFormat(value, opts) {
             if (value instanceof Date) return +value;
             return value;
         }
