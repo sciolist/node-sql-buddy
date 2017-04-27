@@ -64,7 +64,7 @@ function SqlBuilderFactory(options) {
 		parameterNamePrefix: '$',
 		parameterNameFormat(name, opts) { return opts.parameterNamePrefix + name; },
 		parameterValueFormat(value, opts) { return value; }
-	}, opts);
+	}, options);
 
 	function builder(text, parameters) {
 		let sql = new Sql(opts);
