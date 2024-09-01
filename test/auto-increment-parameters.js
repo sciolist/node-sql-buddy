@@ -1,9 +1,9 @@
-var test = require('tap').test
-var assert = require('assert');
+import tap from 'tap';
+import assert from 'assert';
+import SqlBuilderFactory from '../index.mjs';
+var sql = SqlBuilderFactory();
 
-var sql = require('../')();
-
-test('parameters are automatically incremented', function (t) {
+tap.test('parameters are automatically incremented', function (t) {
 	var expectedSQL = 'select $1; select $2;';
 	var expectedArgs = ['test1', 'test2'];
 

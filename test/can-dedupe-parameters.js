@@ -1,9 +1,9 @@
-var test = require('tap').test
-var assert = require('assert');
+import tap from 'tap';
+import assert from 'assert';
+import SqlBuilderFactory from '../index.mjs';
+var sql = SqlBuilderFactory();
 
-var sql = require('../')();
-
-test('can dedupe parameters', function (t) {
+tap.test('can dedupe parameters', function (t) {
 	var expectedSQL = 'select $1, $1';
 	var expectedArgs = ['test1'];
 	
@@ -11,6 +11,7 @@ test('can dedupe parameters', function (t) {
 		.append('select $1, $2', ['test1', 'test1'])
 		.toQuery();
 
+		console.log(query);
 	assert.equal(query.text, expectedSQL);
 	assert.deepEqual(query.parameters, expectedArgs);
 	t.end();

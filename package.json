@@ -2,7 +2,9 @@
   "name": "sql-buddy",
   "version": "1.0.1",
   "description": "Tiny sql query builder",
-  "main": "index.js",
+  "main": "index.mjs",
+  "types": "index.d.ts",
+  "type": "module",
   "scripts": {
     "test": "tap test/*"
   },
