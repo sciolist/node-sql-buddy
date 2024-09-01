@@ -25,7 +25,7 @@ export class Sql {
     toQuery(): { text: string; parameters: string[]; names: string[] };
 }
 
-type SqlBuilderFunction = (() => Sql) | ((text: string, parameters: any[]) => Sql) | ((sql: Queryable) => Sql);
+type SqlBuilderFunction = (() => Sql) & ((text: string, parameters: any[]) => Sql) & ((sql: Queryable) => Sql);
 
 export default function SqlBuilderFactory(options?: SqlBuilderOptions): SqlBuilderFunction;
 
