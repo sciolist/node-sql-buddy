@@ -1,6 +1,6 @@
 {
   "name": "sql-buddy",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Tiny sql query builder",
   "main": "index.mjs",
   "types": "index.d.ts",
