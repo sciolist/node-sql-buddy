@@ -10,7 +10,7 @@ interface Queryable {
 }
 
 type SqlBuilderFunction = (() => Sql)
-    & ((text: string, parameters: any[]) => Sql)
+    & ((text: string, parameters?: any[]) => Sql)
     & ((sql: Queryable) => Sql)
     & ((strings: TemplateStringsArray, ...parameters: any[]) => Sql);
 
@@ -31,3 +31,5 @@ export class Sql {
 }
 
 export default function SqlBuilderFactory(options?: SqlBuilderOptions): SqlBuilderFunction;
+
+export const pgsql: SqlBuilderFunction;
