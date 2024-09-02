@@ -111,10 +111,10 @@ export default function SqlBuilderFactory(options) {
 		parameterValueFormat(value) { return value; }
 	}, options);
 
-	function builder(text, parameters) {
+	function builder(...parameters) {
 		let sql = new Sql(opts);
-        if (!arguments.length) return sql;
-        return sql.append(text, parameters);
+        if (!parameters.length) return sql;
+        return sql.append(...parameters);
 	}
 
 	return builder;
