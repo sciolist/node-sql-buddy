@@ -13,12 +13,46 @@ export class Sql {
         this.options = options ?? {};
     }
 
-    append(text, parameters) {
+    multiAppend(list, fn, opts) {
+        let options = Object.assign({
+            join: ',',
+        }, opts ?? {});
+
+        let first = true;
+        const append = this.append.bind(this);
+        for (const it of list) {
+            if (!first) {
+                this.append(options.join);
+            }
+            fn(append, it);
+            first = false;
+        }
+        return this;
+    }
+
+    append(text, ...parameters) {
         this.built = undefined;
-    
+
+        if (typeof text === 'string') {
+            parameters = parameters[0];
+        }
+
+        // handle appending another instance of Sql
         if (typeof text?.text === 'string') {
             parameters = text.parameters;
             text = text.text;
+        }
+
+        // handle appending template strings
+        if (text instanceof Array) {
+            let combinedText = [];
+            for (let i=0; i<text.length; ++i) {
+                combinedText.push(text[i]);
+                if (parameters.length <= i) break;
+                const name = this.options.parameterNamePrefix + String(i + 1);
+                combinedText.push(name);
+            }
+            text = combinedText.join('');
         }
     
         if(parameters && (parameters instanceof Array) && (parameters[0] instanceof Array) && parameters[0].length === 0) {
@@ -35,7 +69,7 @@ export class Sql {
         }
 
         let argCount = 0;
-        const prefix = this.options.parameterNamePrefix;
+        const prefixre = new RegExp('(?!\\\\)[' + (this.options.parameterNamePrefix) + '](\\d+)', 'g');
         const sqlList = [];
         const argList = [];
         const argNameList = [];
@@ -43,7 +77,7 @@ export class Sql {
         for(let i=0; i<this.parts.length; ++i) {
             let txt = this.parts[i][0];
             const args = this.parts[i][1] ?? [];
-            txt = txt.replace(new RegExp('(?!\\\\)\\' + (prefix) + '(\\d+)', 'g'), (m, idx) => {
+            txt = txt.replace(prefixre, (m, idx) => {
                 let parameterName;
                 const parameterValue = this.options.parameterValueFormat(args[Number(idx) - 1]);
                 let savedIndex = outputArguments.get(parameterValue);
@@ -86,7 +120,4 @@ export default function SqlBuilderFactory(options) {
 	return builder;
 }
 
-export function escape(v, quote) {
-    if(!quote) quote = "'";
-    return ((v||'').toString().replace(RegExp('[' + quote + ']', 'g'), function(m) { return m + m }));
-}
+export const pgsql = SqlBuilderFactory();

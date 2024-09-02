@@ -9,7 +9,6 @@ tap.test('can change parameter name prefix', function (t) {
 	
 	var query = sql()
 		.append('select @1, @2', ['test1', 'test2'])
-		.toQuery();
 
 	assert.equal(query.text, expectedSQL);
 	assert.deepEqual(query.parameters, expectedArgs);

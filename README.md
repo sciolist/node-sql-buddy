@@ -6,45 +6,73 @@ Just tracks parameter orders for sql queries.
 
 You can piece together your sql by appending query bits:
 
-    var sql = require('sql-buddy')();
+    import SqlFactory from 'sql-buddy';
+    const sql = SqlFactory();
 
-    var query = sql('select $0;', ['one'])
-      .append('select $0;', ['two'])
-      .toQuery();
+    const query = sql`select ${'one'}` // using template strings
+      .append('select $1;', ['two']);  // or parameter arrays
 
-    query.text;       // 'select $0; select $1;'
-    query.names;      // ['$0', '$1'];
-    query.parameters; // ['one', 'two'];
+    query.text;       // 'select $1; select $2;'
+    query.names;      // ['$1', '$2'];
+    query.values;     // ['one', 'two'];
 
 Parameters are deduplicated:
 
-    var sql = require('sql-buddy');
+    import SqlFactory from 'sql-buddy';
+    const sql = SqlFactory();
 
-    var query = sql()
-      .append('select $0;', ['one'])
-      .append('select $0, $1;', ['two', 'one'])
-      .toQuery();
+    const query = sql()
+      .append`select ${'one'};`
+      .append`select ${'two'}, ${'one'};`
 
-    query.text;      // 'select $0; select $1, $0;'
-    query.names;     // ['$0', '$1'];
-    query.parameter; // ['one', 'two'];
+    query.text;      // 'select $1; select $2, $1;'
+    query.names;     // ['$1', '$2'];
+    query.values;    // ['one', 'two'];
 
-Also a very basic sql quote escape:
+You can also append an array of values, which will automatically place commas between each:
 
-    var sql = require('sql-buddy');
-    sql.escape("te'st"); // te''st
+    import SqlFactory from 'sql-buddy';
+    const sql = SqlFactory();
+    const values = [{ id: 'one' }, { id: 'two' }]
+
+    const query = sql()
+      .append`insert into mytable values`
+      .multiAppend(values, (q, it) => q`(${it.id})`)
+
+    query.text;      // 'insert into mytable values ($1) , ($2)'
+    query.names;     // ['$1', '$2'];
+    query.values;    // ['one', 'two'];
 
 Options:
 
-    var sql = require('sql-buddy')({
-        parameterNamePrefix: '$',   // change the '$' prefix to another character, such as '@' for mssql
+    import SqlFactory from 'sql-buddy';
+    
+    const sql = SqlFactory({
+        // change the '$' prefix to another character, such as '@' for mssql
+        parameterNamePrefix: '$',
         
         // change how the parameter name is built
         parameterNameFormat(index, opts) { return '$' + index }
 
-        // change the parameter value before 
+        // change the parameter value before sending
         parameterValueFormat(value, opts) {
             if (value instanceof Date) return +value;
             return value;
         }
     })
+
+## Postgres example
+
+```
+import pg from 'pg';
+import { pgsql } from 'sql-buddy'; // uses default settings for postgresql
+
+const conn = new pg.Client();
+await conn.connect();
+
+const id = 5;
+
+const result = await conn.query(pgsql`select * from mytable where id = ${id}`);
+
+console.log(result.rows);
+```

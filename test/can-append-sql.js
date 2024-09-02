@@ -16,7 +16,6 @@ tap.test('can append sub sql objects', function (t) {
 		.append(query1)
 		.append('select $1', ['test3'])
 		.append(query1)
-		.toQuery();
 
 	assert.equal(query.text, expectedSQL);
 	assert.deepEqual(query.parameters, expectedArgs);

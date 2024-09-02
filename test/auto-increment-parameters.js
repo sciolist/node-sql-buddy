@@ -10,7 +10,6 @@ tap.test('parameters are automatically incremented', function (t) {
 	var query = sql()
 		.append('select $1;', ['test1'])
 		.append('select $1;', ['test2'])
-		.toQuery();
 
 	assert.equal(query.text, expectedSQL);
 	assert.deepEqual(query.parameters, expectedArgs);

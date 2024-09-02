@@ -9,6 +9,11 @@ interface Queryable {
     values: any[];
 }
 
+type SqlBuilderFunction = (() => Sql)
+    & ((text: string, parameters: any[]) => Sql)
+    & ((sql: Queryable) => Sql)
+    & ((strings: TemplateStringsArray, ...parameters: any[]) => Sql);
+
 export class Sql {
     built: undefined | { text: string; parameters: any[]; names: string[]; }
     parts: Array<[string[], any[]]>;
@@ -19,14 +24,10 @@ export class Sql {
     get values(): any[];
     get parameters(): any[];
 
-    append(text: string, parameters: any[]): Sql;
-    append(sql: Queryable): Sql;
+    append: SqlBuilderFunction;
+    multiAppend<T>(array: T[], fn: (q: SqlBuilderFunction, it: T) => Sql, opts?: { join?: string }): Sql;
 
     toQuery(): { text: string; parameters: string[]; names: string[] };
 }
 
-type SqlBuilderFunction = (() => Sql) & ((text: string, parameters: any[]) => Sql) & ((sql: Queryable) => Sql);
-
 export default function SqlBuilderFactory(options?: SqlBuilderOptions): SqlBuilderFunction;
-
-export function escape(v: string, quote?: string): string;
