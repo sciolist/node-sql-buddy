@@ -80,7 +80,7 @@ export class Sql {
             txt = txt.replace(prefixre, (m, idx) => {
                 let parameterName;
                 const parameterValue = this.options.parameterValueFormat(args[Number(idx) - 1]);
-                let savedIndex = outputArguments.get(parameterValue);
+                let savedIndex = parameterValue === null ? undefined : outputArguments.get(parameterValue);
                 if (savedIndex === undefined) {
                     argCount += 1;
                     savedIndex = argCount;
